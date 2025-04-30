@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Chess, Move, Square } from 'chess.js';
+import { Chess, Move, Square as ChessSquare } from 'chess.js';
 import { ChessGameState, GameMove } from '@shared/schema';
 
 type ChessContextType = {
@@ -157,12 +157,12 @@ export const ChessProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       return;
     }
     
-    const piece = game.get(square as Square);
+    const piece = game.get(square as ChessSquare);
     if (piece && piece.color === game.turn()) {
       setSelectedPiece(square);
       
       // Get legal moves for this piece
-      const moves = game.moves({ square: square as Square, verbose: true });
+      const moves = game.moves({ square: square as ChessSquare, verbose: true });
       const destinations = moves.map(move => move.to);
       setLegalMoves(destinations);
     } else {

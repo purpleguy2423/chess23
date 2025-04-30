@@ -175,7 +175,7 @@ const ChessBoard = ({
       const square = file + rank;
       const isDark = (r + f) % 2 === 1;
       
-      const piece = game ? game.get(square as Square) : null;
+      const piece = game ? game.get(square as ChessSquare) : null;
       const pieceCode = piece ? (piece.color === 'w' ? piece.type.toUpperCase() : piece.type.toLowerCase()) : null;
       
       const isHighlighted = selectedPiece === square;
