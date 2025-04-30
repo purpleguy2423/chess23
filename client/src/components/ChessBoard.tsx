@@ -6,6 +6,7 @@ import ChessPiece from "./ChessPiece";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Clock } from "lucide-react";
+import { Square as ChessSquare } from "chess.js";
 
 type SquareProps = {
   square: string;
@@ -174,7 +175,7 @@ const ChessBoard = ({
       const square = file + rank;
       const isDark = (r + f) % 2 === 1;
       
-      const piece = game ? game.get(square) : null;
+      const piece = game ? game.get(square as Square) : null;
       const pieceCode = piece ? (piece.color === 'w' ? piece.type.toUpperCase() : piece.type.toLowerCase()) : null;
       
       const isHighlighted = selectedPiece === square;
