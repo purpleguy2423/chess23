@@ -15,15 +15,46 @@ const Play = () => {
   const [showDifficultyDialog, setShowDifficultyDialog] = useState(false);
   const [difficulty, setDifficulty] = useState(1);
   const [gameStarted, setGameStarted] = useState(false);
+  const [isAIThinking, setIsAIThinking] = useState(false);
   
   const {
-    chess,
+    game,
     gameState,
     makeMove,
     aiDifficulty,
     setAiDifficulty,
     newGame
   } = useChessContext();
+
+  // AI Move Effect - will trigger after player makes a move
+  useEffect(() => {
+    const makeAIMove = async () => {
+      if (
+        gameStarted && 
+        game && 
+        gameState && 
+        !gameState.gameOver && 
+        game.turn() === 'b' && 
+        !isAIThinking
+      ) {
+        setIsAIThinking(true);
+        
+        // Simulate thinking time
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Calculate AI move
+        const aiMove = findAIMove(game, aiDifficulty);
+        
+        if (aiMove) {
+          makeMove(aiMove);
+        }
+        
+        setIsAIThinking(false);
+      }
+    };
+
+    makeAIMove();
+  }, [game, gameState, gameStarted, isAIThinking, aiDifficulty, makeMove]);
 
   // Start a new AI game with selected difficulty
   const startNewAIGame = () => {

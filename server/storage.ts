@@ -213,7 +213,7 @@ export class DatabaseStorage implements IStorage {
           highlightSquares: ["e1"],
           legalMoves: {"e1": ["e2", "f1"]},
           expectedMove: {from: "e1", to: "e2"},
-          nextStep: null
+          nextStep: undefined
         }
       ]
     };
@@ -261,7 +261,7 @@ export class DatabaseStorage implements IStorage {
           highlightSquares: ["d8", "d5"],
           legalMoves: {"d8": ["d7", "d6", "d5"]},
           expectedMove: {from: "d8", to: "d5"},
-          nextStep: null
+          nextStep: undefined
         }
       ]
     };
