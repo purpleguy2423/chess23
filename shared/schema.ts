@@ -1,6 +1,7 @@
 import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
 // User model
 export const users = pgTable("users", {
@@ -10,6 +11,12 @@ export const users = pgTable("users", {
   rating: integer("rating").notNull().default(1200),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+export const usersRelations = relations(users, ({ many }) => ({
+  whiteGames: many(games, { relationName: "white_player" }),
+  blackGames: many(games, { relationName: "black_player" }),
+  tutorialProgress: many(tutorialProgress),
+}));
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -30,6 +37,19 @@ export const games = pgTable("games", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const gamesRelations = relations(games, ({ one }) => ({
+  whitePlayer: one(users, {
+    fields: [games.whiteId],
+    references: [users.id],
+    relationName: "white_player",
+  }),
+  blackPlayer: one(users, {
+    fields: [games.blackId],
+    references: [users.id],
+    relationName: "black_player",
+  }),
+}));
+
 export const insertGameSchema = createInsertSchema(games).pick({
   whiteId: true,
   blackId: true,
@@ -48,6 +68,13 @@ export const tutorialProgress = pgTable("tutorial_progress", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+export const tutorialProgressRelations = relations(tutorialProgress, ({ one }) => ({
+  user: one(users, {
+    fields: [tutorialProgress.userId],
+    references: [users.id],
+  }),
+}));
 
 export const insertTutorialProgressSchema = createInsertSchema(tutorialProgress).pick({
   userId: true,

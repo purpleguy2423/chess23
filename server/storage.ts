@@ -1,8 +1,12 @@
 import { 
   User, InsertUser, Game, InsertGame, 
   TutorialProgress, InsertTutorialProgress,
-  TutorialLesson, TutorialStep, ChessGameState 
+  TutorialLesson, TutorialStep, ChessGameState,
+  users, games, tutorialProgress
 } from "@shared/schema";
+
+import { db } from "./db";
+import { eq, or, and } from "drizzle-orm";
 
 // Storage interface for CRUD operations
 export interface IStorage {
@@ -27,84 +31,56 @@ export interface IStorage {
   getTutorialLesson(lessonId: string): Promise<TutorialLesson | undefined>;
 }
 
-// In-memory storage implementation
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private games: Map<number, Game>;
-  private tutorialProgress: Map<string, TutorialProgress>; // key: userId-lessonId
+// Database storage implementation
+export class DatabaseStorage implements IStorage {
   private tutorialLessons: Map<string, TutorialLesson>;
-  private userIdCounter: number;
-  private gameIdCounter: number;
-  private tutorialIdCounter: number;
 
   constructor() {
-    this.users = new Map();
-    this.games = new Map();
-    this.tutorialProgress = new Map();
     this.tutorialLessons = new Map();
-    this.userIdCounter = 1;
-    this.gameIdCounter = 1;
-    this.tutorialIdCounter = 1;
-    
     // Initialize with tutorial lessons
     this.initTutorialLessons();
   }
 
   // User operations
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.userIdCounter++;
-    const now = new Date();
-    const user: User = { 
-      ...insertUser, 
-      id, 
-      rating: 1200,
-      createdAt: now 
-    };
-    this.users.set(id, user);
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
 
   async updateUserRating(userId: number, newRating: number): Promise<User | undefined> {
-    const user = await this.getUser(userId);
-    if (!user) return undefined;
-    
-    const updatedUser = { ...user, rating: newRating };
-    this.users.set(userId, updatedUser);
-    return updatedUser;
+    const [updatedUser] = await db
+      .update(users)
+      .set({ rating: newRating })
+      .where(eq(users.id, userId))
+      .returning();
+    return updatedUser || undefined;
   }
 
   // Game operations
   async getGame(id: number): Promise<Game | undefined> {
-    return this.games.get(id);
+    const [game] = await db.select().from(games).where(eq(games.id, id));
+    return game || undefined;
   }
 
   async getGamesByUser(userId: number): Promise<Game[]> {
-    return Array.from(this.games.values()).filter(
-      (game) => game.whiteId === userId || game.blackId === userId
-    );
+    return await db
+      .select()
+      .from(games)
+      .where(or(eq(games.whiteId, userId), eq(games.blackId, userId)));
   }
 
   async createGame(insertGame: InsertGame): Promise<Game> {
-    const id = this.gameIdCounter++;
-    const now = new Date();
-    const game: Game = {
-      ...insertGame,
-      id,
-      winner: null,
-      createdAt: now,
-      updatedAt: now
-    };
-    this.games.set(id, game);
+    const [game] = await db.insert(games).values(insertGame).returning();
     return game;
   }
 
@@ -115,26 +91,26 @@ export class MemStorage implements IStorage {
     status: string, 
     winner?: string
   ): Promise<Game | undefined> {
-    const game = await this.getGame(gameId);
-    if (!game) return undefined;
-    
-    const updatedGame = { 
-      ...game, 
-      state, 
-      moves, 
-      status, 
-      winner: winner || null,
-      updatedAt: new Date() 
-    };
-    this.games.set(gameId, updatedGame);
-    return updatedGame;
+    const [updatedGame] = await db
+      .update(games)
+      .set({ 
+        state, 
+        moves, 
+        status, 
+        winner: winner || null,
+        updatedAt: new Date()
+      })
+      .where(eq(games.id, gameId))
+      .returning();
+    return updatedGame || undefined;
   }
 
   // Tutorial operations
   async getTutorialProgress(userId: number): Promise<TutorialProgress[]> {
-    return Array.from(this.tutorialProgress.values()).filter(
-      (progress) => progress.userId === userId
-    );
+    return await db
+      .select()
+      .from(tutorialProgress)
+      .where(eq(tutorialProgress.userId, userId));
   }
 
   async updateTutorialProgress(
@@ -142,34 +118,38 @@ export class MemStorage implements IStorage {
     lessonId: string, 
     completed: boolean
   ): Promise<TutorialProgress | undefined> {
-    const key = `${userId}-${lessonId}`;
-    const existingProgress = this.tutorialProgress.get(key);
+    const [existingProgress] = await db
+      .select()
+      .from(tutorialProgress)
+      .where(and(
+        eq(tutorialProgress.userId, userId),
+        eq(tutorialProgress.lessonId, lessonId)
+      ));
     
     if (existingProgress) {
-      const updatedProgress: TutorialProgress = {
-        ...existingProgress,
-        completed,
-        updatedAt: new Date()
-      };
-      this.tutorialProgress.set(key, updatedProgress);
+      const [updatedProgress] = await db
+        .update(tutorialProgress)
+        .set({ 
+          completed,
+          updatedAt: new Date()
+        })
+        .where(eq(tutorialProgress.id, existingProgress.id))
+        .returning();
       return updatedProgress;
     } else {
-      const id = this.tutorialIdCounter++;
-      const now = new Date();
-      const newProgress: TutorialProgress = {
-        id,
-        userId,
-        lessonId,
-        completed,
-        createdAt: now,
-        updatedAt: now
-      };
-      this.tutorialProgress.set(key, newProgress);
+      const [newProgress] = await db
+        .insert(tutorialProgress)
+        .values({
+          userId,
+          lessonId,
+          completed
+        })
+        .returning();
       return newProgress;
     }
   }
   
-  // Tutorial content
+  // Tutorial content - these are stored in memory as they are static content
   async getTutorialLessons(): Promise<TutorialLesson[]> {
     return Array.from(this.tutorialLessons.values());
   }
@@ -291,4 +271,4 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
