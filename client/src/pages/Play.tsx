@@ -29,6 +29,13 @@ const Play = () => {
   // AI Move Effect - will trigger after player makes a move
   useEffect(() => {
     const makeAIMove = async () => {
+      console.log("AI move function triggered");
+      console.log("gameStarted:", gameStarted);
+      console.log("game:", game);
+      console.log("gameState:", gameState);
+      console.log("game turn:", game?.turn());
+      console.log("isAIThinking:", isAIThinking);
+      
       if (
         gameStarted && 
         game && 
@@ -37,19 +44,28 @@ const Play = () => {
         game.turn() === 'b' && 
         !isAIThinking
       ) {
+        console.log("AI is making a move...");
         setIsAIThinking(true);
         
         // Simulate thinking time
         await new Promise(resolve => setTimeout(resolve, 500));
         
         // Calculate AI move
+        console.log("Calculating AI move with difficulty:", aiDifficulty);
         const aiMove = findAIMove(game, aiDifficulty);
+        console.log("AI move calculated:", aiMove);
         
         if (aiMove) {
-          makeMove(aiMove);
+          console.log("Executing AI move:", aiMove);
+          const result = makeMove(aiMove);
+          console.log("AI move result:", result);
+        } else {
+          console.error("AI move calculation failed");
         }
         
         setIsAIThinking(false);
+      } else {
+        console.log("AI move conditions not met");
       }
     };
 
@@ -58,10 +74,27 @@ const Play = () => {
 
   // Start a new AI game with selected difficulty
   const startNewAIGame = () => {
+    console.log("Starting new AI game with difficulty:", difficulty);
     setAiDifficulty(difficulty);
+    
+    // Initialize a new game
     newGame({ aiGame: true, aiDifficulty: difficulty });
+    
+    // Set game as started
     setGameStarted(true);
     setShowDifficultyDialog(false);
+    
+    // Log state after setting up new game
+    console.log("Game started:", gameStarted);
+    console.log("Current game object:", game);
+    console.log("Current game state:", gameState);
+    console.log("Current AI difficulty:", aiDifficulty);
+    
+    // Force a re-render to ensure dependency updates in useEffect for AI
+    setTimeout(() => {
+      console.log("Post-delay state check - game:", game);
+      console.log("Post-delay state check - gameStarted:", gameStarted);
+    }, 100);
   };
 
   // Handle "Play vs Computer" tab click

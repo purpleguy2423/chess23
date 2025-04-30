@@ -64,14 +64,21 @@ function getAttackers(chess: Chess, square: Square) {
   const attackers = [];
   const board = chess.board();
   
+  // Define the chess squares
+  const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+  const ranks = ['1', '2', '3', '4', '5', '6', '7', '8'];
+  
   for (let i = 0; i < 8; i++) {
     for (let j = 0; j < 8; j++) {
       const piece = board[i][j];
       if (piece) {
         try {
+          // Calculate the square name (e.g., 'a1', 'h8')
+          const fromSquare = files[j] + ranks[7-i] as Square;
+          
           // Try to move the piece to the target square to see if it's a legal move
           const move = {
-            from: chess.SQUARES[i * 8 + j],
+            from: fromSquare,
             to: square,
             promotion: 'q' // Default promotion to queen for pawn moves
           };
@@ -95,28 +102,58 @@ function getAttackers(chess: Chess, square: Square) {
 
 // Find a move for the AI based on difficulty level
 export function findAIMove(chess: Chess, difficulty: number): GameMove | null {
+  console.log("findAIMove called with difficulty:", difficulty);
+  console.log("Current game state:", chess.fen());
+  console.log("Current turn:", chess.turn());
+  console.log("Game over?", chess.isGameOver());
+  
   // If the game is over, return null
-  if (chess.isGameOver()) return null;
+  if (chess.isGameOver()) {
+    console.log("Game is over, no AI move needed");
+    return null;
+  }
 
-  // Based on difficulty, use different strategies
-  switch(difficulty) {
-    case 1: // Easiest - Random legal moves
-      return getRandomMove(chess);
+  try {
+    // Based on difficulty, use different strategies
+    let move: GameMove | null;
     
-    case 2: // Easy - Simple evaluation
-      return getBestMoveOneDepth(chess);
+    switch(difficulty) {
+      case 1: // Easiest - Random legal moves
+        console.log("Using random move strategy");
+        move = getRandomMove(chess);
+        break;
       
-    case 3: // Medium - Look ahead 2 moves
-      return minimaxMove(chess, 2);
-      
-    case 4: // Hard - Look ahead 3 moves
-      return minimaxMove(chess, 3);
-      
-    case 5: // Hardest - Look ahead 4 moves with alpha-beta pruning
-      return minimaxMoveAlphaBeta(chess, 4, -Infinity, Infinity, chess.turn() === 'w');
-      
-    default:
-      return getRandomMove(chess);
+      case 2: // Easy - Simple evaluation
+        console.log("Using simple evaluation strategy");
+        move = getBestMoveOneDepth(chess);
+        break;
+        
+      case 3: // Medium - Look ahead 2 moves
+        console.log("Using minimax with depth 2");
+        move = minimaxMove(chess, 2);
+        break;
+        
+      case 4: // Hard - Look ahead 3 moves
+        console.log("Using minimax with depth 3");
+        move = minimaxMove(chess, 3);
+        break;
+        
+      case 5: // Hardest - Look ahead 4 moves with alpha-beta pruning
+        console.log("Using alpha-beta pruning with depth 4");
+        move = minimaxMoveAlphaBeta(chess, 4, -Infinity, Infinity, chess.turn() === 'w');
+        break;
+        
+      default:
+        console.log("Using default random move strategy");
+        move = getRandomMove(chess);
+    }
+    
+    console.log("AI calculated move:", move);
+    return move;
+  } catch (err) {
+    console.error("Error in findAIMove:", err);
+    // Fallback to random move in case of error
+    return getRandomMove(chess);
   }
 }
 
