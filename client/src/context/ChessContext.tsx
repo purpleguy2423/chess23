@@ -110,14 +110,24 @@ export const ChessProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   // Make a move on the board
   const makeMove = (moveObj: GameMove): boolean => {
     try {
+      console.log('ChessContext: Attempting move', moveObj);
+      console.log('Current FEN:', game.fen());
+      console.log('Current turn:', game.turn());
+      console.log('Legal moves:', game.moves({ verbose: true }));
+      
       const move = game.move(moveObj);
+      console.log('Move result:', move);
+      
       if (move) {
         updateCapturedPieces(move);
         updateGameState();
         setSelectedPiece(null);
         setLegalMoves([]);
+        console.log('Move successful, new FEN:', game.fen());
+        console.log('New turn:', game.turn());
         return true;
       }
+      console.log('Move rejected by chess.js');
       return false;
     } catch (error) {
       console.error('Invalid move:', error);

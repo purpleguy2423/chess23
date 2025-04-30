@@ -74,7 +74,23 @@
   }
 
   .legal-move {
-    @apply absolute w-[30%] h-[30%] rounded-full bg-black/20 pointer-events-none;
+    @apply absolute w-[40%] h-[40%] rounded-full bg-green-500/40 pointer-events-none;
+    animation: pulse-legal 1.5s infinite;
+  }
+  
+  @keyframes pulse-legal {
+    0% {
+      transform: scale(0.8);
+      opacity: 0.8;
+    }
+    50% {
+      transform: scale(1);
+      opacity: 0.6;
+    }
+    100% {
+      transform: scale(0.8);
+      opacity: 0.8;
+    }
   }
 
   .tutorial-highlight {

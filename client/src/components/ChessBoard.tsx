@@ -130,7 +130,11 @@ const ChessBoard = ({
 
   // Handle piece movement
   const handleDrop = (from: string, to: string) => {
+    console.log('Attempting move:', from, 'to', to);
+    
     const result = makeMove({ from, to });
+    console.log('Move result:', result);
+    
     if (result && tutorialHighlightSquare && from === tutorialHighlightSquare && onCompleteTutorialStep) {
       onCompleteTutorialStep();
     }
@@ -138,6 +142,10 @@ const ChessBoard = ({
 
   // Handle square click for piece selection
   const handleSquareClick = (square: string) => {
+    console.log('Square clicked:', square);
+    console.log('Selected piece:', selectedPiece);
+    console.log('Legal moves:', legalMoves);
+    
     // Handle tutorial highlighting
     if (
       tutorialHighlightSquare && 
@@ -145,12 +153,16 @@ const ChessBoard = ({
       legalMoves.includes(square) && 
       onCompleteTutorialStep
     ) {
-      makeMove({ from: tutorialHighlightSquare, to: square });
+      console.log('Tutorial move attempt:', tutorialHighlightSquare, 'to', square);
+      const result = makeMove({ from: tutorialHighlightSquare, to: square });
+      console.log('Tutorial move result:', result);
       onCompleteTutorialStep();
       return;
     }
     
     selectPiece(square);
+    console.log('After selection - Selected piece:', selectedPiece);
+    console.log('After selection - Legal moves:', legalMoves);
   };
 
   // Generate squares for the board
